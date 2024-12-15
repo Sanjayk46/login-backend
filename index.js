@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express();
 
-
+// Connect to the database
 dbConnection();
 
 app.use(express.json());
@@ -34,8 +34,15 @@ app.get('/auth/github',
 app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: '/' }),
   (req, res) => {
-    // Redirect to the dashboard or home page after successful login
-    res.redirect('/');
+    // GitHub login was successful, now redirect to the frontend with user data
+    const userProfile = req.user.profile;  // Assuming passport is storing user profile in `req.user.profile`
+    const accessToken = req.user.accessToken; // Access token if needed for further API requests
+
+    // You can either set up a session or send a JWT token to the frontend for better handling.
+    // For now, let's pass user data in the URL params (for simplicity).
+    
+    // Redirecting to frontend after successful authentication
+    res.redirect(`https://oauthlogin-front.netlify.app/dashboard?user=${encodeURIComponent(JSON.stringify(userProfile))}&token=${accessToken}`);
   }
 );
 
@@ -50,6 +57,7 @@ app.get('/profile', (req, res) => {
 // API routes
 app.use("/user", userRoutes);
 
+// Set the port and start the server
 const port = process.env.PORT || 8001;
 app.listen(port, () => {
   console.log(`App is running on port ${port}`);
