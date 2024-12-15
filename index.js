@@ -31,20 +31,41 @@ app.get('/auth/github',
 );
 
 // GitHub callback route
+// app.get('/auth/github/callback',
+//   passport.authenticate('github', { failureRedirect: '/' }),
+//   (req, res) => {
+//     // GitHub login was successful, now redirect to the frontend with user data
+//     const userProfile = req.user.profile;  // Assuming passport is storing user profile in `req.user.profile`
+//     const accessToken = req.user.accessToken; // Access token if needed for further API requests
+
+//     // You can either set up a session or send a JWT token to the frontend for better handling.
+//     // For now, let's pass user data in the URL params (for simplicity).
+    
+//     // Redirecting to frontend after successful authentication
+//     res.redirect(`https://oauthlogin-front.netlify.app/dashboard?user=${encodeURIComponent(JSON.stringify(userProfile))}&token=${accessToken}`);
+//   }
+// );
 app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: '/' }),
   (req, res) => {
-    // GitHub login was successful, now redirect to the frontend with user data
-    const userProfile = req.user.profile;  // Assuming passport is storing user profile in `req.user.profile`
-    const accessToken = req.user.accessToken; // Access token if needed for further API requests
+    console.log(req.user); // Debugging
+    const userProfile = req.user.profile; 
+    const accessToken = req.user.accessToken;
 
-    // You can either set up a session or send a JWT token to the frontend for better handling.
-    // For now, let's pass user data in the URL params (for simplicity).
-    
-    // Redirecting to frontend after successful authentication
-    res.redirect(`https://oauthlogin-front.netlify.app/dashboard?user=${encodeURIComponent(JSON.stringify(userProfile))}&token=${accessToken}`);
+    if (!userProfile || !accessToken) {
+      console.error('User data or token missing from req.user');
+      res.redirect('https://oauthlogin-front.netlify.app/login?error=missing_data');
+      return;
+    }
+
+    res.redirect(
+      `https://oauthlogin-front.netlify.app/auth/github/callback?user=${encodeURIComponent(
+        JSON.stringify(userProfile)
+      )}&token=${encodeURIComponent(accessToken)}`
+    );
   }
 );
+
 // app.post('/auth/github/callback', (req, res) => {
 //   const { code } = req.body;
   
