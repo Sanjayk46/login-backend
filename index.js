@@ -72,37 +72,37 @@ app.get('/auth/github/callback',
   }
 );
 
-// app.post('/auth/github/callback', (req, res) => {
-//   const { code } = req.body;
+app.post('/auth/github/callback', (req, res) => {
+  const { code } = req.body;
   
-//   // Your logic to exchange the code for an access token
-//   axios.post('https://github.com/login/oauth/access_token', {
-//     client_id: process.env.GITHUB_CLIENT_ID,
-//     client_secret: process.env.GITHUB_CLIENT_SECRET,
-//     code: code,
-//   })
-//     .then((response) => {
-//       // GitHub returns the token in the response
-//       const accessToken = response.data.access_token;
+  // Your logic to exchange the code for an access token
+  axios.post('https://github.com/login/oauth/access_token', {
+    client_id: process.env.GITHUB_CLIENT_ID,
+    client_secret: process.env.GITHUB_CLIENT_SECRET,
+    code: code,
+  })
+    .then((response) => {
+      // GitHub returns the token in the response
+      const accessToken = response.data.access_token;
       
-//       // Use the token to get user info
-//       axios.get('https://api.github.com/user', {
-//         headers: { Authorization: `Bearer ${accessToken}` }
-//       })
-//         .then((userResponse) => {
-//           // Send the user data and token back to the frontend
-//           res.json({ user: userResponse.data, token: accessToken });
-//         })
-//         .catch((error) => {
-//           console.error("Error fetching user info from GitHub", error);
-//           res.status(500).send("Failed to fetch user data");
-//         });
-//     })
-//     .catch((error) => {
-//       console.error("Error exchanging GitHub code", error);
-//       res.status(500).send("Failed to exchange code");
-//     });
-// });
+      // Use the token to get user info
+      axios.get('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+        .then((userResponse) => {
+          // Send the user data and token back to the frontend
+          res.json({ user: userResponse.data, token: accessToken });
+        })
+        .catch((error) => {
+          console.error("Error fetching user info from GitHub", error);
+          res.status(500).send("Failed to fetch user data");
+        });
+    })
+    .catch((error) => {
+      console.error("Error exchanging GitHub code", error);
+      res.status(500).send("Failed to exchange code");
+    });
+});
 
 
 // Protect your routes (example)
