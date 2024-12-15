@@ -4,7 +4,8 @@ import passport from 'passport';
 import session from 'express-session';
 import userRoutes from './router/useRouter.js';
 import dbConnection from './database/db.js'
-import cors from 'cors'
+import cors from 'cors';
+import axios from 'axios';
 import './auth.js'; // Import passport strategy configuration
 dotenv.config();
 
