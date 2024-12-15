@@ -66,7 +66,7 @@ app.get('/auth/github/callback',
     }
 
     res.redirect(
-      `https://oauthlogin-front.netlify.app/auth/github/callback?user=${encodeURIComponent(
+      `https://oauthlogin-front.netlify.app/dashboard?user=${encodeURIComponent(
         JSON.stringify(userProfile)
       )}&token=${encodeURIComponent(accessToken)}`
     );
