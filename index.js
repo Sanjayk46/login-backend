@@ -4,6 +4,7 @@ import passport from 'passport';
 import session from 'express-session';
 import userRoutes from './router/useRouter.js';
 import dbConnection from './database/db.js'
+import cors from 'cors'
 import './auth.js'; // Import passport strategy configuration
 dotenv.config();
 
@@ -13,7 +14,12 @@ const app = express();
 dbConnection();
 
 app.use(express.json());
-
+const corsOption={
+    origin:"https://oauthlogin-front.netlify.app",
+    credentials: true
+}
+//cros connection
+app.use(cors(corsOption));
 // Initialize session
 app.use(session({
   secret: process.env.SESSION_SECRET,
