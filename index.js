@@ -3,10 +3,11 @@ import dotenv from 'dotenv';
 import passport from 'passport';
 import session from 'express-session';
 import userRoutes from './router/useRouter.js';
-import dbConnection from './database/db.js'
+import dbConnection from './database/db.js';
 import cors from 'cors';
 import axios from 'axios';
 import './auth.js'; // Import passport strategy configuration
+
 dotenv.config();
 
 const app = express();
@@ -14,97 +15,93 @@ const app = express();
 // Connect to the database
 dbConnection();
 
+// Middleware
 app.use(express.json());
-const corsOption={
-    origin:"https://oauthlogin-front.netlify.app",
-    credentials: true
-}
-//cros connection
+
+const corsOption = {
+  origin: "https://oauthlogin-front.netlify.app",
+  credentials: true,
+};
+
+// Enable CORS
 app.use(cors(corsOption));
+
 // Initialize session
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
 // Initialize Passport.js
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Route for GitHub login
-app.get('/auth/github',
-  passport.authenticate('github', { scope: ['user:email'] })
-);
+// GitHub Authentication Routes
+
+// GitHub login route
+app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
 
 // GitHub callback route
-app.get('/auth/github/callback',
+app.get(
+  '/auth/github/callback',
   passport.authenticate('github', { failureRedirect: '/' }),
   (req, res) => {
-    // GitHub login was successful, now redirect to the frontend with user data
-    const userProfile = req.user.profile;  // Assuming passport is storing user profile in `req.user.profile`
-    const accessToken = req.user.accessToken; // Access token if needed for further API requests
+    // Extract user profile and token
+    const userProfile = {
+      id: req.user.githubId,
+      username: req.user.username,
+      displayName: req.user.displayName,
+      avatarUrl: req.user.avatarUrl,
+    };
 
-    // You can either set up a session or send a JWT token to the frontend for better handling.
-    // For now, let's pass user data in the URL params (for simplicity).
-    
-    // Redirecting to frontend after successful authentication
-    res.redirect(`https://oauthlogin-front.netlify.app/dashboard?user=${encodeURIComponent(JSON.stringify(userProfile))}&token=${accessToken}`);
+    // For simplicity, include user data and token in URL query params
+    res.redirect(
+      `https://oauthlogin-front.netlify.app/dashboard?user=${encodeURIComponent(
+        JSON.stringify(userProfile)
+      )}`
+    );
   }
 );
-// app.get('/auth/github/callback',
-//   passport.authenticate('github', { failureRedirect: '/' }),
-//   (req, res) => {
-//     console.log(req.user); // Debugging
-//     const userProfile = req.user.profile; 
-//     const accessToken = req.user.accessToken;
 
-//     if (!userProfile || !accessToken) {
-//       console.error('User data or token missing from req.user');
-//     }
-
-//     res.redirect(
-//       `https://oauthlogin-front.netlify.app/dashboard?user=${encodeURIComponent(
-//         JSON.stringify(userProfile)
-//       )}&token=${encodeURIComponent(accessToken)}`
-//     );
-//   }
-// );
-
-app.post('/auth/github/callback', (req, res) => {
+// Optional: If you plan to handle login with a POST request (GitHub token exchange)
+app.post('/auth/github/token', async (req, res) => {
   const { code } = req.body;
-  
-  // Your logic to exchange the code for an access token
-  axios.post('https://github.com/login/oauth/access_token', {
-    client_id: process.env.GITHUB_CLIENT_ID,
-    client_secret: process.env.GITHUB_CLIENT_SECRET,
-    code: code,
-  })
-    .then((response) => {
-      // GitHub returns the token in the response
-      const accessToken = response.data.access_token;
-      
-      // Use the token to get user info
-      axios.get('https://api.github.com/user', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      })
-        .then((userResponse) => {
-          // Send the user data and token back to the frontend
-          res.json({ user: userResponse.data, token: accessToken });
-        })
-        .catch((error) => {
-          console.error("Error fetching user info from GitHub", error);
-          res.status(500).send("Failed to fetch user data");
-        });
-    })
-    .catch((error) => {
-      console.error("Error exchanging GitHub code", error);
-      res.status(500).send("Failed to exchange code");
+
+  try {
+    // Exchange the code for an access token
+    const tokenResponse = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code: code,
+      },
+      { headers: { Accept: 'application/json' } }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+
+    // Fetch user information using the token
+    const userResponse = await axios.get('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
+
+    const userProfile = userResponse.data;
+
+    res.json({
+      user: userProfile,
+      token: accessToken,
+    });
+  } catch (error) {
+    console.error('GitHub Token Exchange Error:', error);
+    res.status(500).json({ error: 'Failed to exchange token or fetch user data' });
+  }
 });
 
-
-// Protect your routes (example)
+// Protected route example
 app.get('/profile', (req, res) => {
   if (!req.isAuthenticated()) {
     return res.redirect('/login');
@@ -112,8 +109,8 @@ app.get('/profile', (req, res) => {
   res.send(`Welcome ${req.user.username}`);
 });
 
-// API routes
-app.use("/user", userRoutes);
+// API Routes
+app.use('/user', userRoutes);
 
 // Set the port and start the server
 const port = process.env.PORT || 8001;
