@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    // Indicates whether the user is an admin or not
+    // Indicates whether the user is an admin
     isAdmin: {
       type: Boolean,
       required: true,
@@ -32,12 +32,7 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpires: { 
       type: Date 
     },
-    // Liked movies
-    likedMovies: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Movie' // Assuming you have a Movie model
-    }],
-    // GitHub OAuth data (only if using GitHub login)
+   // GitHub OAuth data
     githubId: { 
       type: String, 
       unique: true 
@@ -45,12 +40,15 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { 
       type: String 
     },
+    username: { 
+      type: String 
+    },
     // Email verification flag
     isEmailVerified: {
       type: Boolean,
       default: false
     },
-    // Security related fields (optional)
+    // Security-related fields (optional)
     loginAttempts: {
       type: Number,
       default: 0
@@ -60,7 +58,9 @@ const userSchema = new mongoose.Schema(
       default: false
     }
   },
-  { timestamps: true } // Adds createdAt and updatedAt timestamps
+  { 
+    timestamps: true // Adds createdAt and updatedAt timestamps
+  }
 );
 
 // Create the User model
